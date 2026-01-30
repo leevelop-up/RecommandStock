@@ -19,4 +19,6 @@ jobs:
         script: |
           cd ~/docker/RecommandStock
           git pull origin main
+          newgrp docker << END
           /usr/local/bin/docker-compose up -d --build
+          END
