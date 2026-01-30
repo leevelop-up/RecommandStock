@@ -17,6 +17,6 @@ jobs:
         key: ${{ secrets.NAS_SSH_KEY }}
         port: ${{ secrets.NAS_PORT }}
         script: |
-          cd /volume1/docker/RecommandStock
-          sudo git pull origin main
-          sudo docker-compose up -d --build
+          cd ~/docker/RecommandStock
+          git pull origin main
+          /usr/local/bin/docker-compose up -d --build
