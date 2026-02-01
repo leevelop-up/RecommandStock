@@ -6,15 +6,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/app/components/ui/popover";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/app/components/ui/dropdown-menu";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, TrendingUp, Zap, Clock, Lock, ChevronRight, User, Heart, Briefcase, LogOut } from "lucide-react";
+import { Bell, TrendingUp, Zap, Clock, Lock, ChevronRight, User } from "lucide-react";
 
 const categories = [
   { name: "추천 종목", path: "/stocks/recommended" },
@@ -112,12 +105,6 @@ export function Header() {
     const loggedIn = localStorage.getItem("isLoggedIn") === "true";
     setIsLoggedIn(loggedIn);
   }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    setIsLoggedIn(false);
-    navigate("/");
-  };
 
   const unreadCount = alerts.filter((a) => !a.isRead).length;
 
@@ -245,28 +232,12 @@ export function Header() {
 
             {/* 로그인 상태에 따른 버튼 */}
             {isLoggedIn ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="relative p-2 rounded-full hover:bg-gray-100 transition-colors">
-                    <User className="size-5 text-gray-600" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => navigate("/watchlist")}>
-                    <Heart className="size-4 mr-2" />
-                    관심목록
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/portfolio")}>
-                    <Briefcase className="size-4 mr-2" />
-                    포트폴리오
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600">
-                    <LogOut className="size-4 mr-2" />
-                    로그아웃
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <button
+                onClick={() => navigate("/mypage")}
+                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
+              >
+                <User className="size-5 text-gray-600" />
+              </button>
             ) : (
               <Link to="/login">
                 <Button variant="default">로그인</Button>

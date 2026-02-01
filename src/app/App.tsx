@@ -7,6 +7,7 @@ import { LoginPage } from "@/app/pages/LoginPage";
 import { AuthCallbackPage } from "@/app/pages/AuthCallbackPage";
 import { WatchlistPage } from "@/app/pages/WatchlistPage";
 import { PortfolioPage } from "@/app/pages/PortfolioPage";
+import { MyPage } from "@/app/pages/MyPage";
 import { Header } from "@/app/components/Header";
 
 export default function App() {
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/themes" element={<ThemeListPage />} />
         <Route path="/theme/:id" element={<ThemeDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/mypage" element={<MyPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/auth/google/callback" element={<AuthCallbackPage provider="google" />} />
