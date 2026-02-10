@@ -1,19 +1,19 @@
 version: '3.8'
 
 services:
-  recommandstock:
+  frontend:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: recommandstock
+    container_name: recommandstock-frontend
     ports:
       - "3000:80"
-    restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      - VITE_API_URL=http://leevelop.com:8000/api
+    restart: unless-stopped
     networks:
       - recommand-network
 
 networks:
   recommand-network:
-    driver: bridge
+    external: true
