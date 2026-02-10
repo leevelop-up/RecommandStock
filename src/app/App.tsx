@@ -8,6 +8,7 @@ import { AuthCallbackPage } from "@/app/pages/AuthCallbackPage";
 import { WatchlistPage } from "@/app/pages/WatchlistPage";
 import { PortfolioPage } from "@/app/pages/PortfolioPage";
 import { MyPage } from "@/app/pages/MyPage";
+import DataManagementPage from "@/app/pages/DataManagementPage";
 import { Header } from "@/app/components/Header";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
+        <Route path="/data-management" element={<DataManagementPage />} />
         <Route path="/auth/google/callback" element={<AuthCallbackPage provider="google" />} />
         <Route path="/auth/kakao/callback" element={<AuthCallbackPage provider="kakao" />} />
         <Route path="/auth/naver/callback" element={<AuthCallbackPage provider="naver" />} />

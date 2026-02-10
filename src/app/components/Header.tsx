@@ -7,12 +7,13 @@ import {
   PopoverTrigger,
 } from "@/app/components/ui/popover";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, TrendingUp, Zap, Clock, Lock, ChevronRight, User } from "lucide-react";
+import { Bell, TrendingUp, Zap, Clock, Lock, ChevronRight, User, Database } from "lucide-react";
 
 const categories = [
   { name: "추천 종목", path: "/stocks/recommended" },
   { name: "테마 종목", path: "/stocks/theme" },
   { name: "시장 지표", path: "/market" },
+  { name: "데이터 관리", path: "/data-management" },
 ];
 
 interface Alert {

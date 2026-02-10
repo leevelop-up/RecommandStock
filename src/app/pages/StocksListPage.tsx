@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Stock, StockCard } from "@/app/components/StockCard";
 import { StockDetails } from "@/app/components/StockDetails";
 import { NewsCard, News } from "@/app/components/NewsCard";
-import { recommendedStocks, themeStocks, generateChartData } from "@/app/pages/HomePage";
+import { mockRecommendedStocks, mockThemeStocks, generateChartData } from "@/app/data/mockStocks";
 import { Button } from "@/app/components/ui/button";
 import { ArrowLeft, Loader2, TrendingUp, Flame } from "lucide-react";
 
@@ -123,7 +123,7 @@ export function StocksListPage() {
   const navigate = useNavigate();
   const category = (type || "recommended") as "recommended" | "theme";
 
-  const initialStocks = category === "recommended" ? recommendedStocks : themeStocks;
+  const initialStocks = category === "recommended" ? mockRecommendedStocks : mockThemeStocks;
   const [stocks, setStocks] = useState<Stock[]>(initialStocks);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);

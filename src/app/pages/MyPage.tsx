@@ -4,7 +4,7 @@ import { StockCard, Stock } from "@/app/components/StockCard";
 import { StockDetails } from "@/app/components/StockDetails";
 import { PremiumDialog } from "@/app/components/PremiumDialog";
 import { SettingsDialog } from "@/app/components/SettingsDialog";
-import { generateChartData } from "@/app/pages/HomePage";
+import { generateChartData } from "@/app/data/mockStocks";
 import { Button } from "@/app/components/ui/button";
 import { Avatar, AvatarFallback } from "@/app/components/ui/avatar";
 import {
