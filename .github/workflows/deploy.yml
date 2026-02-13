@@ -22,11 +22,10 @@ jobs:
             echo "🔍 Git 상태 확인..."
             git status
 
-            # upstream remote 확인 및 추가 (HTTPS)
-            if ! git remote | grep -q "^upstream$"; then
-              echo "⚙️  upstream remote 추가 중..."
-              git remote add upstream https://github.com/leevelop-up/RecommandStock.git
-            fi
+            # upstream remote 재설정 (HTTPS)
+            echo "⚙️  upstream remote 재설정 중..."
+            git remote remove upstream 2>/dev/null || true
+            git remote add upstream https://github.com/leevelop-up/RecommandStock.git
 
             echo "📡 Git remote 목록:"
             git remote -v
