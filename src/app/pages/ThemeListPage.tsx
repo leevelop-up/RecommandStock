@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -13,6 +13,7 @@ import {
   ChevronRight,
   Users,
 } from "lucide-react";
+import { themesApi } from "@/app/services/api";
 
 export interface ThemeItem {
   id: string;
@@ -172,8 +173,40 @@ export function ThemeListPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"score" | "change" | "stocks">("score");
+  const [themes, setThemes] = useState<ThemeItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredThemes = mockThemes
+  // API에서 테마 데이터 로드
+  useEffect(() => {
+    const loadThemes = async () => {
+      try {
+        const response = await themesApi.getAll();
+        // API 데이터를 ThemeItem 형식으로 변환
+        const apiThemes: ThemeItem[] = response.themes.map((theme: any) => ({
+          id: String(theme.id),
+          name: theme.theme_name,
+          score: theme.theme_score || 0,
+          previousScore: theme.theme_score || 0,
+          changePercent: theme.daily_change || 0,
+          relatedStockCount: theme.stock_count || 0,
+          trend: theme.daily_change > 0 ? "up" : theme.daily_change < 0 ? "down" : "stable",
+          topStocks: [],
+          category: "테마",
+        }));
+        setThemes(apiThemes);
+      } catch (error) {
+        console.error("테마 로드 실패:", error);
+        // 에러 시 목 데이터 사용
+        setThemes(mockThemes);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadThemes();
+  }, []);
+
+  const filteredThemes = themes
     .filter((theme) =>
       theme.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
@@ -187,6 +220,18 @@ export function ThemeListPage() {
     navigate(`/theme/${theme.id}`);
   };
 
+  // 로딩 중
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">테마 데이터 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -199,7 +244,7 @@ export function ThemeListPage() {
             <div>
               <h1 className="text-2xl font-bold">전체 테마</h1>
               <p className="text-sm text-gray-600">
-                AI가 분석한 {mockThemes.length}개 테마의 실시간 점수
+                AI가 분석한 {themes.length}개 테마의 실시간 점수
               </p>
             </div>
           </div>
@@ -236,19 +281,19 @@ export function ThemeListPage() {
           <Card className="p-4 text-center">
             <p className="text-sm text-gray-500 mb-1">상승 테마</p>
             <p className="text-2xl font-bold text-green-600">
-              {mockThemes.filter((t) => t.trend === "up").length}개
+              {themes.filter((t) => t.trend === "up").length}개
             </p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-sm text-gray-500 mb-1">하락 테마</p>
             <p className="text-2xl font-bold text-red-600">
-              {mockThemes.filter((t) => t.trend === "down").length}개
+              {themes.filter((t) => t.trend === "down").length}개
             </p>
           </Card>
           <Card className="p-4 text-center">
             <p className="text-sm text-gray-500 mb-1">전체 관련주</p>
             <p className="text-2xl font-bold text-blue-600">
-              {mockThemes.reduce((acc, t) => acc + t.relatedStockCount, 0)}개
+              {themes.reduce((acc, t) => acc + t.relatedStockCount, 0)}개
             </p>
           </Card>
         </div>
