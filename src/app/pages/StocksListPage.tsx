@@ -6,6 +6,7 @@ import { NewsCard, News } from "@/app/components/NewsCard";
 import { mockRecommendedStocks, mockThemeStocks, generateChartData } from "@/app/data/mockStocks";
 import { Button } from "@/app/components/ui/button";
 import { ArrowLeft, Loader2, TrendingUp, Flame } from "lucide-react";
+import { recommendationsApi } from "@/app/services/api";
 
 // 더 많은 종목 생성
 const generateMoreStocks = (category: "recommended" | "theme", startId: number, count: number): Stock[] => {
@@ -123,9 +124,8 @@ export function StocksListPage() {
   const navigate = useNavigate();
   const category = (type || "recommended") as "recommended" | "theme";
 
-  const initialStocks = category === "recommended" ? mockRecommendedStocks : mockThemeStocks;
-  const [stocks, setStocks] = useState<Stock[]>(initialStocks);
-  const [loading, setLoading] = useState(false);
+  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
   const observerTarget = useRef<HTMLDivElement>(null);
 
@@ -134,21 +134,67 @@ export function StocksListPage() {
 
   const news = generateNews(category);
 
-  const loadMoreStocks = useCallback(() => {
-    if (loading || !hasMore) return;
+  // API에서 초기 데이터 로드
+  useEffect(() => {
+    const loadInitialData = async () => {
+      console.log(`🔄 ${category} 페이지 데이터 로딩 시작...`);
+      setLoading(true);
+      try {
+        const data = category === "recommended"
+          ? await recommendationsApi.getToday()
+          : await recommendationsApi.getGrowth();
 
-    setLoading(true);
-    
-    setTimeout(() => {
-      const newStocks = generateMoreStocks(category, stocks.length + 100, 10);
-      setStocks(prev => [...prev, ...newStocks]);
-      setLoading(false);
-      
-      if (stocks.length + newStocks.length >= 50) {
-        setHasMore(false);
+        console.log(`✅ API 응답:`, data);
+
+        const apiStocks = category === "recommended"
+          ? data.recommendations
+          : data.predictions;
+
+        if (apiStocks && apiStocks.length > 0) {
+          const stocks = apiStocks.map((item: any, index: number) => {
+            const price = item.stock_price > 0 ? item.stock_price : 50000 + (index * 10000);
+            const changePercent = item.daily_change || (Math.random() * 10) - 5;
+
+            return {
+              id: item.stock_code || String(index),
+              symbol: item.stock_code,
+              name: item.stock_name,
+              price: price,
+              change: Math.floor(price * (changePercent / 100)),
+              changePercent: changePercent,
+              marketCap: "-",
+              peRatio: 15 + (Math.random() * 10),
+              dividendYield: Math.random() * 3,
+              sector: item.theme_name,
+              recommendation: item.theme_score >= 80 ? "Strong Buy" as const : item.theme_score >= 60 ? "Buy" as const : "Hold" as const,
+              analystRating: item.theme_score >= 80 ? 5 : item.theme_score >= 60 ? 4 : 3,
+            };
+          });
+          console.log(`✅ 변환된 종목:`, stocks);
+          setStocks(stocks);
+          setHasMore(false); // API 데이터는 한 번에 모두 로드
+        } else {
+          console.log("⚠️  데이터 없음, 목 데이터 사용");
+          setStocks(category === "recommended" ? mockRecommendedStocks : mockThemeStocks);
+        }
+      } catch (error) {
+        console.error("❌ API 로드 실패:", error);
+        // 에러 시 목 데이터 사용
+        setStocks(category === "recommended" ? mockRecommendedStocks : mockThemeStocks);
+      } finally {
+        setLoading(false);
+        console.log("✅ 로딩 완료");
       }
-    }, 1000);
-  }, [loading, hasMore, stocks.length, category]);
+    };
+
+    loadInitialData();
+  }, [category]);
+
+  const loadMoreStocks = useCallback(() => {
+    // API 데이터를 사용하므로 무한 스크롤 비활성화
+    // 모든 데이터는 초기 로드 시 가져옴
+    return;
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -183,6 +229,18 @@ export function StocksListPage() {
   const Icon = category === "recommended" ? TrendingUp : Flame;
   const iconBg = category === "recommended" ? "bg-blue-600" : "bg-orange-600";
 
+  // 초기 로딩 상태
+  if (loading && stocks.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="size-12 animate-spin text-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">종목 데이터 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 py-8">
@@ -203,8 +261,8 @@ export function StocksListPage() {
             <div>
               <h1 className="text-3xl font-semibold">{title}</h1>
               <p className="text-gray-600">
-                {category === "recommended" 
-                  ? "전문가들이 추천하는 종목 전체 목록" 
+                {category === "recommended"
+                  ? "AI가 추천하는 종목 전체 목록"
                   : "시장에서 주목받고 있는 테마 종목 전체 목록"}
               </p>
             </div>
@@ -214,7 +272,9 @@ export function StocksListPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* 종목 목록 */}
           <div className="lg:col-span-2">
-            <h2 className="text-xl font-semibold mb-4">종목 목록</h2>
+            <h2 className="text-xl font-semibold mb-4">
+              종목 목록 ({stocks.length}개)
+            </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {stocks.map((stock) => (
                 <StockCard
@@ -225,15 +285,9 @@ export function StocksListPage() {
               ))}
             </div>
 
-            {/* 무한 스크롤 트리거 */}
-            <div ref={observerTarget} className="flex justify-center py-8">
-              {loading && (
-                <div className="flex items-center gap-2 text-gray-500">
-                  <Loader2 className="size-5 animate-spin" />
-                  <span>로딩 중...</span>
-                </div>
-              )}
-              {!hasMore && stocks.length > 0 && (
+            {/* 전체 로드 완료 메시지 */}
+            <div className="flex justify-center py-8">
+              {stocks.length > 0 && (
                 <p className="text-gray-500 text-sm">모든 종목을 불러왔습니다.</p>
               )}
             </div>
