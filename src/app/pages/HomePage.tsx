@@ -33,24 +33,62 @@ export function HomePage() {
   // API 데이터 로드
   useEffect(() => {
     const loadData = async () => {
+      console.log("🔄 HomePage 데이터 로딩 시작...");
       setLoading(true);
       setError(null);
       try {
-        const data = await recommendationsApi.getToday();
-        if (data.recommendedStocks && data.recommendedStocks.length > 0) {
-          setRecommendedStocks(data.recommendedStocks.slice(0, 4));
+        // 추천 종목과 급등 종목을 병렬로 가져오기
+        const [todayData, growthData] = await Promise.all([
+          recommendationsApi.getToday(),
+          recommendationsApi.getGrowth(),
+        ]);
+
+        console.log("✅ 추천 종목 데이터:", todayData);
+        console.log("✅ 급등 종목 데이터:", growthData);
+
+        // API 응답을 Stock 형식으로 변환
+        if (todayData.recommendations && todayData.recommendations.length > 0) {
+          const stocks = todayData.recommendations.slice(0, 4).map((rec: any, index: number) => ({
+            id: rec.stock_code || String(index),
+            name: rec.stock_name,
+            ticker: rec.stock_code,
+            price: rec.stock_price || 0,
+            change: 0, // stock_change_rate에서 파싱 필요
+            changePercent: 0,
+            volume: 0,
+            theme: rec.theme_name,
+            sentiment: rec.theme_score >= 80 ? "positive" : rec.theme_score >= 60 ? "neutral" : "negative",
+            strength: rec.theme_score >= 80 ? "강세" : rec.theme_score >= 60 ? "보통" : "약세",
+          }));
+          console.log("✅ 변환된 추천 종목:", stocks);
+          setRecommendedStocks(stocks);
         }
-        if (data.themeStocks && data.themeStocks.length > 0) {
-          setThemeStocks(data.themeStocks.slice(0, 6));
+
+        if (growthData.predictions && growthData.predictions.length > 0) {
+          const stocks = growthData.predictions.slice(0, 6).map((pred: any, index: number) => ({
+            id: pred.stock_code || String(index),
+            name: pred.stock_name,
+            ticker: pred.stock_code,
+            price: pred.stock_price || 0,
+            change: 0,
+            changePercent: pred.daily_change || 0,
+            volume: 0,
+            theme: pred.theme_name,
+            sentiment: pred.daily_change > 3 ? "positive" : pred.daily_change > 0 ? "neutral" : "negative",
+            strength: pred.daily_change > 3 ? "강세" : pred.daily_change > 0 ? "보통" : "약세",
+          }));
+          console.log("✅ 변환된 급등 종목:", stocks);
+          setThemeStocks(stocks);
         }
       } catch (err) {
-        console.error("API 로드 실패:", err);
+        console.error("❌ API 로드 실패:", err);
         setError("데이터를 불러오는데 실패했습니다. Mock 데이터를 사용합니다.");
         // Mock 데이터 사용
         setRecommendedStocks(mockRecommendedStocks);
         setThemeStocks(mockThemeStocks);
       } finally {
         setLoading(false);
+        console.log("✅ HomePage 로딩 완료");
       }
     };
 

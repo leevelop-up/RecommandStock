@@ -15,21 +15,31 @@ import type {
 // API 기본 URL (환경변수로 관리)
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:8000/api";
 
+console.log("🔧 API_BASE_URL:", API_BASE_URL);
+console.log("🔧 VITE_API_URL env:", import.meta.env.VITE_API_URL);
+
 /**
  * API 호출 헬퍼 함수
  */
 async function fetchApi<T>(endpoint: string): Promise<T> {
+  const url = `${API_BASE_URL}${endpoint}`;
+  console.log(`📡 API 요청: ${url}`);
+
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`);
+    const response = await fetch(url);
+    console.log(`📡 API 응답 (${endpoint}):`, response.status, response.statusText);
 
     if (!response.ok) {
       const error: ApiError = await response.json();
+      console.error(`❌ API 에러 (${endpoint}):`, error);
       throw new Error(error.detail || `API Error: ${response.status}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log(`✅ API 성공 (${endpoint}):`, data);
+    return data;
   } catch (error) {
-    console.error(`API 호출 실패: ${endpoint}`, error);
+    console.error(`❌ API 호출 실패 (${endpoint}):`, error);
     throw error;
   }
 }

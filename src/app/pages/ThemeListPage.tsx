@@ -179,8 +179,12 @@ export function ThemeListPage() {
   // API에서 테마 데이터 로드
   useEffect(() => {
     const loadThemes = async () => {
+      console.log("🔄 테마 데이터 로딩 시작...");
       try {
         const response = await themesApi.getAll();
+        console.log("✅ API 응답 받음:", response);
+        console.log("📊 테마 개수:", response.themes?.length);
+
         // API 데이터를 ThemeItem 형식으로 변환
         const apiThemes: ThemeItem[] = response.themes.map((theme: any) => ({
           id: String(theme.id),
@@ -193,13 +197,16 @@ export function ThemeListPage() {
           topStocks: [],
           category: "테마",
         }));
+        console.log("✅ 변환된 테마 데이터:", apiThemes.slice(0, 3));
         setThemes(apiThemes);
       } catch (error) {
-        console.error("테마 로드 실패:", error);
+        console.error("❌ 테마 로드 실패:", error);
+        console.log("⚠️  목 데이터 사용");
         // 에러 시 목 데이터 사용
         setThemes(mockThemes);
       } finally {
         setLoading(false);
+        console.log("✅ 로딩 완료");
       }
     };
 
