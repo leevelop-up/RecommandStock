@@ -121,13 +121,26 @@ export function HomePage() {
             .slice(0, 4);
 
           // 하락 테마 (daily_change < 0, 하위 3개)
-          const falling = allThemes
+          let falling = allThemes
             .filter(t => t.scoreChange < 0)
             .sort((a, b) => a.scoreChange - b.scoreChange)
             .slice(0, 3);
 
+          // 하락 테마가 없으면 상승률이 낮은 테마를 표시 (상대적 하락)
+          if (falling.length === 0) {
+            falling = allThemes
+              .filter(t => t.scoreChange >= 0)
+              .sort((a, b) => a.scoreChange - b.scoreChange) // 낮은 상승률 순
+              .slice(0, 3)
+              .map(theme => ({
+                ...theme,
+                trend: "down" as const, // 상대적으로 낮은 상승
+              }));
+            console.log("⚠️  실제 하락 테마 없음, 상승률 낮은 테마로 대체");
+          }
+
           console.log("✅ 급상승 테마:", rising);
-          console.log("✅ 하락 테마:", falling);
+          console.log("✅ 하락/저조 테마:", falling);
 
           setRisingThemes(rising);
           setFallingThemes(falling);
