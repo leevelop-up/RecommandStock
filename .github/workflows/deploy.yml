@@ -18,6 +18,29 @@ jobs:
           port: ${{ secrets.NAS_PORT }}
           script: |
             cd ~/docker/RecommandStock
-            git pull upstream main || git pull origin main
-            /usr/local/bin/docker-compose up -d --build
+            echo "📁 현재 디렉토리: $(pwd)"
+            echo "🔍 Git 상태 확인..."
+            git status
+
+            # upstream remote 확인 및 추가
+            if ! git remote | grep -q "^upstream$"; then
+              echo "⚙️  upstream remote 추가 중..."
+              git remote add upstream git@github.com:leevelop-up/RecommandStock.git
+            fi
+
+            echo "📡 Git remote 목록:"
+            git remote -v
+
+            echo "🔄 최신 코드 가져오기..."
+            git fetch upstream
+            git reset --hard upstream/main
+
+            echo "📝 현재 커밋:"
+            git log -1 --oneline
+
+            echo "🐳 Docker 컨테이너 재빌드 및 재시작..."
+            /usr/local/bin/docker-compose down
+            /usr/local/bin/docker-compose up -d --build --force-recreate
+
             echo "✅ 자동 배포 완료!"
+            echo "🔗 배포 URL: http://leevelop.com:3000"
