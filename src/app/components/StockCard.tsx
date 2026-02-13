@@ -53,12 +53,12 @@ export function StockCard({ stock, onViewDetails }: StockCardProps) {
       <div className="flex justify-between items-start mb-4">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold text-xl">{stock.symbol}</h3>
+            <h3 className="font-semibold text-xl">{stock.name}</h3>
             <Badge className={getRecommendationColor(stock.recommendation)}>
               {getRecommendationText(stock.recommendation)}
             </Badge>
           </div>
-          <p className="text-sm text-gray-600">{stock.name}</p>
+          <p className="text-sm text-gray-600">{stock.symbol}</p>
           <p className="text-xs text-gray-500">{stock.sector}</p>
         </div>
         <button className="text-gray-400 hover:text-yellow-500 transition-colors">
