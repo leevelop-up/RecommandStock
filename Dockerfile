@@ -3,6 +3,10 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# 빌드 인자 정의
+ARG VITE_API_URL=http://leevelop.com:8000/api
+ENV VITE_API_URL=$VITE_API_URL
+
 # 패키지 설치
 COPY package*.json ./
 RUN npm ci

@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=http://leevelop.com:8000/api
     container_name: recommandstock-frontend
     ports:
       - "3000:80"
