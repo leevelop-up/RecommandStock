@@ -140,23 +140,21 @@ export function StocksListPage() {
       console.log(`🔄 ${category} 페이지 데이터 로딩 시작...`);
       setLoading(true);
       try {
-        // 종목 데이터와 뉴스 데이터를 병렬로 가져오기
-        const [stocksData, newsData] = await Promise.all([
-          category === "recommended"
-            ? recommendationsApi.getToday()
-            : recommendationsApi.getGrowth(),
-          newsApi.getMarket(10),
-        ]);
+        // 1. 먼저 종목 데이터 가져오기
+        const stocksData = category === "recommended"
+          ? await recommendationsApi.getToday()
+          : await recommendationsApi.getGrowth();
 
         console.log(`✅ 종목 API 응답:`, stocksData);
-        console.log(`✅ 뉴스 API 응답:`, newsData);
 
         const apiStocks = category === "recommended"
           ? stocksData.recommendations
           : stocksData.predictions;
 
+        let transformedStocks: Stock[] = [];
+
         if (apiStocks && apiStocks.length > 0) {
-          const stocks = apiStocks.map((item: any, index: number) => {
+          transformedStocks = apiStocks.map((item: any, index: number) => {
             const price = item.stock_price > 0 ? item.stock_price : 50000 + (index * 10000);
             const changePercent = item.daily_change || (Math.random() * 10) - 5;
 
@@ -175,17 +173,54 @@ export function StocksListPage() {
               analystRating: item.theme_score >= 80 ? 5 : item.theme_score >= 60 ? 4 : 3,
             };
           });
-          console.log(`✅ 변환된 종목:`, stocks);
-          setStocks(stocks);
-          setHasMore(false); // API 데이터는 한 번에 모두 로드
+          console.log(`✅ 변환된 종목:`, transformedStocks);
+          setStocks(transformedStocks);
+          setHasMore(false);
         } else {
           console.log("⚠️  종목 데이터 없음, 목 데이터 사용");
-          setStocks(category === "recommended" ? mockRecommendedStocks : mockThemeStocks);
+          transformedStocks = category === "recommended" ? mockRecommendedStocks : mockThemeStocks;
+          setStocks(transformedStocks);
         }
 
-        // 뉴스 데이터 변환
-        if (newsData.news && newsData.news.length > 0) {
-          const apiNews = newsData.news.slice(0, 6).map((item: any) => ({
+        // 2. 종목별 뉴스 가져오기 (최대 5개 종목)
+        const stocksForNews = transformedStocks.slice(0, 5);
+        console.log(`📰 뉴스를 가져올 종목들:`, stocksForNews.map(s => s.symbol));
+
+        const newsPromises = stocksForNews.map(stock =>
+          newsApi.getStock(stock.symbol, 3).catch(err => {
+            console.warn(`종목 ${stock.symbol} 뉴스 로드 실패:`, err);
+            return { news: [] };
+          })
+        );
+
+        const newsResults = await Promise.all(newsPromises);
+        console.log(`✅ 뉴스 API 응답:`, newsResults);
+
+        // 3. 모든 뉴스 합치고 중복 제거
+        const allNews: any[] = [];
+        const seenNewsIds = new Set<string>();
+        const seenNewsTitles = new Set<string>();
+
+        newsResults.forEach(result => {
+          if (result.news && result.news.length > 0) {
+            result.news.forEach((item: any) => {
+              const newsId = String(item.id);
+              const newsTitle = item.title.trim();
+
+              // ID 또는 제목으로 중복 체크
+              if (!seenNewsIds.has(newsId) && !seenNewsTitles.has(newsTitle)) {
+                seenNewsIds.add(newsId);
+                seenNewsTitles.add(newsTitle);
+                allNews.push(item);
+              }
+            });
+          }
+        });
+
+        console.log(`✅ 중복 제거 후 뉴스 개수: ${allNews.length}`);
+
+        if (allNews.length > 0) {
+          const apiNews = allNews.slice(0, 6).map((item: any) => ({
             id: String(item.id),
             title: item.title,
             summary: item.description || item.title.substring(0, 100) + "...",
