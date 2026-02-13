@@ -6,12 +6,12 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
-        - VITE_API_URL=http://leevelop.com:8000/api
+        - VITE_API_URL=http://leevelop.com:3002/api
     container_name: recommandstock-frontend
     ports:
       - "3000:80"
     environment:
-      - VITE_API_URL=http://leevelop.com:8000/api
+      - VITE_API_URL=http://leevelop.com:3002/api
     restart: unless-stopped
     networks:
       - recommand-network
