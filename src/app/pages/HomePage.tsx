@@ -6,10 +6,10 @@ import { MarketOverview } from "@/app/components/MarketOverview";
 import { MarketIndexDetail } from "@/app/components/MarketIndexDetail";
 import { HotThemeSection } from "@/app/components/HotThemeSection";
 import { MissedOpportunitySection } from "@/app/components/MissedOpportunitySection";
-import { ThemeTrendSection } from "@/app/components/ThemeTrendSection";
+import { ThemeTrendSection, ThemeTrend } from "@/app/components/ThemeTrendSection";
 import { TrendingUp, Flame, ArrowRight } from "lucide-react";
 import { Button } from "@/app/components/ui/button";
-import { recommendationsApi } from "@/app/services/api";
+import { recommendationsApi, themesApi } from "@/app/services/api";
 import { mockRecommendedStocks, mockThemeStocks, generateChartData } from "@/app/data/mockStocks";
 
 export function HomePage() {
@@ -27,6 +27,8 @@ export function HomePage() {
   // API 데이터 상태
   const [recommendedStocks, setRecommendedStocks] = useState<Stock[]>(mockRecommendedStocks);
   const [themeStocks, setThemeStocks] = useState<Stock[]>(mockThemeStocks);
+  const [risingThemes, setRisingThemes] = useState<ThemeTrend[]>([]);
+  const [fallingThemes, setFallingThemes] = useState<ThemeTrend[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,14 +39,16 @@ export function HomePage() {
       setLoading(true);
       setError(null);
       try {
-        // 추천 종목과 급등 종목을 병렬로 가져오기
-        const [todayData, growthData] = await Promise.all([
+        // 추천 종목, 급등 종목, 테마 데이터를 병렬로 가져오기
+        const [todayData, growthData, themesData] = await Promise.all([
           recommendationsApi.getToday(),
           recommendationsApi.getGrowth(),
+          themesApi.getAll(),
         ]);
 
         console.log("✅ 추천 종목 데이터:", todayData);
         console.log("✅ 급등 종목 데이터:", growthData);
+        console.log("✅ 테마 데이터:", themesData);
 
         // API 응답을 Stock 형식으로 변환
         if (todayData.recommendations && todayData.recommendations.length > 0) {
@@ -99,6 +103,37 @@ export function HomePage() {
         } else {
           console.log("⚠️  급등 종목 데이터 없음, 목 데이터 사용");
         }
+
+        // 테마 트렌드 데이터 변환
+        if (themesData.themes && themesData.themes.length > 0) {
+          const allThemes: ThemeTrend[] = themesData.themes.map((theme: any) => ({
+            id: String(theme.id),
+            name: theme.theme_name,
+            currentScore: theme.theme_score || 0,
+            scoreChange: theme.daily_change || 0,
+            trend: theme.daily_change > 0 ? "up" as const : theme.daily_change < 0 ? "down" as const : "stable" as const,
+          }));
+
+          // 급상승 테마 (daily_change > 0, 상위 4개)
+          const rising = allThemes
+            .filter(t => t.scoreChange > 0)
+            .sort((a, b) => b.scoreChange - a.scoreChange)
+            .slice(0, 4);
+
+          // 하락 테마 (daily_change < 0, 하위 3개)
+          const falling = allThemes
+            .filter(t => t.scoreChange < 0)
+            .sort((a, b) => a.scoreChange - b.scoreChange)
+            .slice(0, 3);
+
+          console.log("✅ 급상승 테마:", rising);
+          console.log("✅ 하락 테마:", falling);
+
+          setRisingThemes(rising);
+          setFallingThemes(falling);
+        } else {
+          console.log("⚠️  테마 데이터 없음");
+        }
       } catch (err) {
         console.error("❌ API 로드 실패:", err);
         setError("데이터를 불러오는데 실패했습니다. Mock 데이터를 사용합니다.");
@@ -147,7 +182,10 @@ export function HomePage() {
         <MissedOpportunitySection />
 
         {/* 📈 테마 트렌드 */}
-        <ThemeTrendSection />
+        <ThemeTrendSection
+          risingThemes={risingThemes}
+          fallingThemes={fallingThemes}
+        />
 
         {/* 금주 추천상품 */}
         <div className="mb-16">
