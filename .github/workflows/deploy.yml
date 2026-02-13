@@ -25,16 +25,21 @@ jobs:
             echo "📡 Git remote 목록:"
             git remote -v
 
+            echo "🔧 origin을 HTTPS로 설정..."
+            git remote set-url origin https://github.com/leevelop-up/RecommandStock.git
+
             echo "🔄 최신 코드 가져오기..."
             git fetch origin
             git reset --hard origin/main
+            git clean -fd
 
             echo "📝 현재 커밋:"
             git log -1 --oneline
 
             echo "🐳 Docker 컨테이너 재빌드 및 재시작..."
             /usr/local/bin/docker-compose down
-            /usr/local/bin/docker-compose up -d --build --force-recreate
+            /usr/local/bin/docker-compose build --no-cache
+            /usr/local/bin/docker-compose up -d --force-recreate
 
             echo "✅ 자동 배포 완료!"
             echo "🔗 배포 URL: http://leevelop.com:3000"
