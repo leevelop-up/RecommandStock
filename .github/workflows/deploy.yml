@@ -22,17 +22,12 @@ jobs:
             echo "🔍 Git 상태 확인..."
             git status
 
-            # upstream remote 재설정 (HTTPS)
-            echo "⚙️  upstream remote 재설정 중..."
-            git remote remove upstream 2>/dev/null || true
-            git remote add upstream https://github.com/leevelop-up/RecommandStock.git
-
             echo "📡 Git remote 목록:"
             git remote -v
 
             echo "🔄 최신 코드 가져오기..."
-            git fetch upstream
-            git reset --hard upstream/main
+            git fetch origin
+            git reset --hard origin/main
 
             echo "📝 현재 커밋:"
             git log -1 --oneline
