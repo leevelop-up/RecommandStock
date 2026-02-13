@@ -4,7 +4,7 @@ import { StockCard, Stock } from "@/app/components/StockCard";
 import { StockDetails } from "@/app/components/StockDetails";
 import { MarketOverview } from "@/app/components/MarketOverview";
 import { MarketIndexDetail } from "@/app/components/MarketIndexDetail";
-import { HotThemeSection } from "@/app/components/HotThemeSection";
+import { HotThemeSection, Theme as HotTheme } from "@/app/components/HotThemeSection";
 import { MissedOpportunitySection } from "@/app/components/MissedOpportunitySection";
 import { ThemeTrendSection, ThemeTrend } from "@/app/components/ThemeTrendSection";
 import { TrendingUp, Flame, ArrowRight } from "lucide-react";
@@ -29,6 +29,7 @@ export function HomePage() {
   const [themeStocks, setThemeStocks] = useState<Stock[]>(mockThemeStocks);
   const [risingThemes, setRisingThemes] = useState<ThemeTrend[]>([]);
   const [fallingThemes, setFallingThemes] = useState<ThemeTrend[]>([]);
+  const [hotThemes, setHotThemes] = useState<HotTheme[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -144,6 +145,25 @@ export function HomePage() {
 
           setRisingThemes(rising);
           setFallingThemes(falling);
+
+          // HOT 테마 TOP 3 (theme_score 기준 상위 3개)
+          const hotTop3: HotTheme[] = themesData.themes
+            .sort((a: any, b: any) => b.theme_score - a.theme_score)
+            .slice(0, 3)
+            .map((theme: any, index: number) => ({
+              id: String(theme.id),
+              rank: index + 1,
+              name: theme.theme_name,
+              score: Math.round(theme.theme_score || 0),
+              newsCount: theme.news_count || 0,
+              relatedStockCount: theme.stock_count || 0,
+              avgReturn: theme.avg_return_rate || 0,
+              summary: `테마 점수 ${Math.round(theme.theme_score)}점, ${theme.stock_count}개 관련주`,
+              trend: theme.daily_change > 0 ? "up" as const : theme.daily_change < 0 ? "down" as const : "stable" as const,
+            }));
+
+          console.log("✅ HOT 테마 TOP 3:", hotTop3);
+          setHotThemes(hotTop3);
         } else {
           console.log("⚠️  테마 데이터 없음");
         }
@@ -189,7 +209,7 @@ export function HomePage() {
         </div>
 
         {/* 🔥 오늘의 HOT 테마 TOP 3 */}
-        <HotThemeSection />
+        <HotThemeSection themes={hotThemes} />
 
         {/* 😢 놓친 기회 알림 */}
         <MissedOpportunitySection />
