@@ -50,15 +50,17 @@ export function HomePage() {
         if (todayData.recommendations && todayData.recommendations.length > 0) {
           const stocks = todayData.recommendations.slice(0, 4).map((rec: any, index: number) => ({
             id: rec.stock_code || String(index),
+            symbol: rec.stock_code,
             name: rec.stock_name,
-            ticker: rec.stock_code,
             price: rec.stock_price || 0,
-            change: 0, // stock_change_rate에서 파싱 필요
+            change: 0,
             changePercent: 0,
-            volume: 0,
-            theme: rec.theme_name,
-            sentiment: rec.theme_score >= 80 ? "positive" : rec.theme_score >= 60 ? "neutral" : "negative",
-            strength: rec.theme_score >= 80 ? "강세" : rec.theme_score >= 60 ? "보통" : "약세",
+            marketCap: "-",
+            peRatio: 0,
+            dividendYield: 0,
+            sector: rec.theme_name,
+            recommendation: rec.theme_score >= 80 ? "Strong Buy" : rec.theme_score >= 60 ? "Buy" : "Hold",
+            analystRating: rec.theme_score >= 80 ? 5 : rec.theme_score >= 60 ? 4 : 3,
           }));
           console.log("✅ 변환된 추천 종목:", stocks);
           setRecommendedStocks(stocks);
@@ -67,15 +69,17 @@ export function HomePage() {
         if (growthData.predictions && growthData.predictions.length > 0) {
           const stocks = growthData.predictions.slice(0, 6).map((pred: any, index: number) => ({
             id: pred.stock_code || String(index),
+            symbol: pred.stock_code,
             name: pred.stock_name,
-            ticker: pred.stock_code,
             price: pred.stock_price || 0,
             change: 0,
             changePercent: pred.daily_change || 0,
-            volume: 0,
-            theme: pred.theme_name,
-            sentiment: pred.daily_change > 3 ? "positive" : pred.daily_change > 0 ? "neutral" : "negative",
-            strength: pred.daily_change > 3 ? "강세" : pred.daily_change > 0 ? "보통" : "약세",
+            marketCap: "-",
+            peRatio: 0,
+            dividendYield: 0,
+            sector: pred.theme_name,
+            recommendation: pred.daily_change > 3 ? "Strong Buy" : pred.daily_change > 0 ? "Buy" : "Hold",
+            analystRating: pred.daily_change > 3 ? 5 : pred.daily_change > 0 ? 4 : 3,
           }));
           console.log("✅ 변환된 급등 종목:", stocks);
           setThemeStocks(stocks);
