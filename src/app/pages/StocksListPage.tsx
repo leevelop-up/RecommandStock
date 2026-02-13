@@ -6,7 +6,7 @@ import { NewsCard, News } from "@/app/components/NewsCard";
 import { mockRecommendedStocks, mockThemeStocks, generateChartData } from "@/app/data/mockStocks";
 import { Button } from "@/app/components/ui/button";
 import { ArrowLeft, Loader2, TrendingUp, Flame } from "lucide-react";
-import { recommendationsApi } from "@/app/services/api";
+import { recommendationsApi, newsApi } from "@/app/services/api";
 
 // 더 많은 종목 생성
 const generateMoreStocks = (category: "recommended" | "theme", startId: number, count: number): Stock[] => {
@@ -132,7 +132,7 @@ export function StocksListPage() {
   const [selectedStock, setSelectedStock] = useState<Stock | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
-  const news = generateNews(category);
+  const [news, setNews] = useState<News[]>([]);
 
   // API에서 초기 데이터 로드
   useEffect(() => {
@@ -140,15 +140,20 @@ export function StocksListPage() {
       console.log(`🔄 ${category} 페이지 데이터 로딩 시작...`);
       setLoading(true);
       try {
-        const data = category === "recommended"
-          ? await recommendationsApi.getToday()
-          : await recommendationsApi.getGrowth();
+        // 종목 데이터와 뉴스 데이터를 병렬로 가져오기
+        const [stocksData, newsData] = await Promise.all([
+          category === "recommended"
+            ? recommendationsApi.getToday()
+            : recommendationsApi.getGrowth(),
+          newsApi.getMarket(10),
+        ]);
 
-        console.log(`✅ API 응답:`, data);
+        console.log(`✅ 종목 API 응답:`, stocksData);
+        console.log(`✅ 뉴스 API 응답:`, newsData);
 
         const apiStocks = category === "recommended"
-          ? data.recommendations
-          : data.predictions;
+          ? stocksData.recommendations
+          : stocksData.predictions;
 
         if (apiStocks && apiStocks.length > 0) {
           const stocks = apiStocks.map((item: any, index: number) => {
@@ -174,13 +179,35 @@ export function StocksListPage() {
           setStocks(stocks);
           setHasMore(false); // API 데이터는 한 번에 모두 로드
         } else {
-          console.log("⚠️  데이터 없음, 목 데이터 사용");
+          console.log("⚠️  종목 데이터 없음, 목 데이터 사용");
           setStocks(category === "recommended" ? mockRecommendedStocks : mockThemeStocks);
+        }
+
+        // 뉴스 데이터 변환
+        if (newsData.news && newsData.news.length > 0) {
+          const apiNews = newsData.news.slice(0, 6).map((item: any) => ({
+            id: String(item.id),
+            title: item.title,
+            summary: item.description || item.title.substring(0, 100) + "...",
+            timestamp: item.created_at ? new Date(item.created_at).toLocaleString('ko-KR', {
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }) : "최근",
+            source: item.source || "뉴스",
+          }));
+          console.log(`✅ 변환된 뉴스:`, apiNews);
+          setNews(apiNews);
+        } else {
+          console.log("⚠️  뉴스 데이터 없음, 목 데이터 사용");
+          setNews(generateNews(category));
         }
       } catch (error) {
         console.error("❌ API 로드 실패:", error);
         // 에러 시 목 데이터 사용
         setStocks(category === "recommended" ? mockRecommendedStocks : mockThemeStocks);
+        setNews(generateNews(category));
       } finally {
         setLoading(false);
         console.log("✅ 로딩 완료");
