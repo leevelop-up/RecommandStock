@@ -209,7 +209,11 @@ export function HomePage() {
         </div>
 
         {/* 🔥 오늘의 HOT 테마 TOP 3 */}
-        <HotThemeSection themes={hotThemes} />
+        {hotThemes.length > 0 ? (
+          <HotThemeSection themes={hotThemes} />
+        ) : (
+          <HotThemeSection />
+        )}
 
         {/* 😢 놓친 기회 알림 */}
         <MissedOpportunitySection />
