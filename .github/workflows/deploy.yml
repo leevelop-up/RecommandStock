@@ -36,6 +36,14 @@ jobs:
             echo "📝 현재 커밋:"
             git log -1 --oneline
 
+            echo "🔍 주요 소스 파일 확인:"
+            echo "- HomePage.tsx:"
+            head -30 src/app/pages/HomePage.tsx | grep -A 5 "hotThemes"
+            echo "- nginx.conf:"
+            grep -A 3 "Cache-Control" nginx.conf
+            echo "- docker-compose.yml:"
+            grep -A 2 "recommand-network" docker-compose.yml
+
             echo "🐳 Docker 컨테이너 및 이미지 정리..."
             /usr/local/bin/docker-compose down --rmi all --volumes
 
