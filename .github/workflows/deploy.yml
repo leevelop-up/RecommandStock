@@ -36,9 +36,13 @@ jobs:
             echo "📝 현재 커밋:"
             git log -1 --oneline
 
-            echo "🐳 Docker 컨테이너 재빌드 및 재시작..."
-            /usr/local/bin/docker-compose down
-            /usr/local/bin/docker-compose build --no-cache
+            echo "🐳 Docker 컨테이너 및 이미지 정리..."
+            /usr/local/bin/docker-compose down --rmi all --volumes
+
+            echo "🔨 Docker 이미지 재빌드 (캐시 없이)..."
+            /usr/local/bin/docker-compose build --no-cache --pull
+
+            echo "🚀 Docker 컨테이너 시작..."
             /usr/local/bin/docker-compose up -d --force-recreate
 
             echo "✅ 자동 배포 완료!"
