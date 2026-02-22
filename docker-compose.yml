@@ -18,4 +18,4 @@ services:
 
 networks:
   recommand-network:
-    external: true
+    driver: bridge
