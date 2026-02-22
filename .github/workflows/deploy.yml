@@ -45,6 +45,8 @@ jobs:
             grep -A 2 "recommand-network" docker-compose.yml
 
             echo "🐳 Docker 컨테이너 및 이미지 정리..."
+            # 모든 recommandstock 관련 컨테이너 강제 정리 (옛날 컨테이너 포함)
+            /usr/local/bin/docker ps -a | grep recommandstock | awk '{print $1}' | xargs -r /usr/local/bin/docker rm -f || true
             /usr/local/bin/docker-compose down --rmi all --volumes
 
             echo "🔨 Docker 이미지 재빌드 (캐시 없이)..."
