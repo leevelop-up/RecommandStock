@@ -45,5 +45,17 @@ jobs:
             echo "🚀 Docker 컨테이너 시작..."
             /usr/local/bin/docker-compose up -d --force-recreate
 
+            echo "⏳ 컨테이너 시작 대기 중..."
+            sleep 5
+
+            echo "📊 Docker 컨테이너 상태:"
+            /usr/local/bin/docker ps -a | grep recommandstock
+
+            echo "📋 Docker 컨테이너 로그 (마지막 20줄):"
+            /usr/local/bin/docker logs --tail 20 recommandstock-frontend
+
+            echo "🔍 실제 배포된 파일 확인:"
+            /usr/local/bin/docker exec recommandstock-frontend ls -lh /usr/share/nginx/html/assets/ | grep index
+
             echo "✅ 자동 배포 완료!"
             echo "🔗 배포 URL: http://leevelop.com:3000"
