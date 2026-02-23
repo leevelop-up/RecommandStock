@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
@@ -13,239 +13,122 @@ import {
   Filter,
   Crown,
 } from "lucide-react";
+import { themesApi } from "@/app/services/api";
 
-interface RelatedStock {
-  id: string;
-  name: string;
-  code: string;
-  currentPrice: number;
-  previousClose: number;
-  change: number;
-  changePercent: number;
-  bidPrice: number;
-  askPrice: number;
-  volume: string;
-  marketCap: string;
-  tier: "1차" | "2차" | "3차" | "숨은";
-  isPremium: boolean;
+interface ThemeStock {
+  id: number;
+  stock_code: string;
+  stock_name: string;
+  stock_price: number;
+  stock_change_rate: string;
+  tier: number;
 }
 
-interface ThemeDetail {
-  id: string;
-  name: string;
-  score: number;
-  description: string;
-  newsCount: number;
-  avgReturn: number;
-  relatedStocks: RelatedStock[];
+interface NewsItem {
+  id: number;
+  title: string;
+  description?: string;
+  link: string;
+  source?: string;
+  published?: string;
 }
 
-const mockThemeDetails: Record<string, ThemeDetail> = {
-  "ai-semiconductor": {
-    id: "ai-semiconductor",
-    name: "AI 반도체",
-    score: 95,
-    description:
-      "인공지능 학습 및 추론에 필요한 고성능 반도체 관련 테마. 엔비디아 실적 호조와 HBM 수요 급증으로 관련주 상승세.",
-    newsCount: 15,
-    avgReturn: 3.2,
-    relatedStocks: [
-      {
-        id: "1",
-        name: "SK하이닉스",
-        code: "000660",
-        currentPrice: 142000,
-        previousClose: 138500,
-        change: 3500,
-        changePercent: 2.53,
-        bidPrice: 141900,
-        askPrice: 142100,
-        volume: "4,521,320",
-        marketCap: "103조원",
-        tier: "1차",
-        isPremium: false,
-      },
-      {
-        id: "2",
-        name: "삼성전자",
-        code: "005930",
-        currentPrice: 71500,
-        previousClose: 70300,
-        change: 1200,
-        changePercent: 1.71,
-        bidPrice: 71400,
-        askPrice: 71600,
-        volume: "12,845,210",
-        marketCap: "427조원",
-        tier: "1차",
-        isPremium: false,
-      },
-      {
-        id: "3",
-        name: "한미반도체",
-        code: "042700",
-        currentPrice: 89500,
-        previousClose: 85200,
-        change: 4300,
-        changePercent: 5.05,
-        bidPrice: 89400,
-        askPrice: 89600,
-        volume: "2,156,890",
-        marketCap: "8.5조원",
-        tier: "1차",
-        isPremium: false,
-      },
-      {
-        id: "4",
-        name: "리노공업",
-        code: "058470",
-        currentPrice: 215000,
-        previousClose: 210000,
-        change: 5000,
-        changePercent: 2.38,
-        bidPrice: 214500,
-        askPrice: 215500,
-        volume: "312,450",
-        marketCap: "3.2조원",
-        tier: "2차",
-        isPremium: false,
-      },
-      {
-        id: "5",
-        name: "ISC",
-        code: "095340",
-        currentPrice: 58200,
-        previousClose: 56800,
-        change: 1400,
-        changePercent: 2.46,
-        bidPrice: 58100,
-        askPrice: 58300,
-        volume: "856,320",
-        marketCap: "1.1조원",
-        tier: "2차",
-        isPremium: false,
-      },
-      {
-        id: "6",
-        name: "테크윙",
-        code: "089030",
-        currentPrice: 32500,
-        previousClose: 31200,
-        change: 1300,
-        changePercent: 4.17,
-        bidPrice: 32400,
-        askPrice: 32600,
-        volume: "1,245,670",
-        marketCap: "6,500억원",
-        tier: "2차",
-        isPremium: false,
-      },
-      {
-        id: "7",
-        name: "피에스케이홀딩스",
-        code: "031980",
-        currentPrice: 28750,
-        previousClose: 27900,
-        change: 850,
-        changePercent: 3.05,
-        bidPrice: 28700,
-        askPrice: 28800,
-        volume: "542,180",
-        marketCap: "4,200억원",
-        tier: "3차",
-        isPremium: true,
-      },
-      {
-        id: "8",
-        name: "하나마이크론",
-        code: "067310",
-        currentPrice: 24800,
-        previousClose: 23500,
-        change: 1300,
-        changePercent: 5.53,
-        bidPrice: 24750,
-        askPrice: 24850,
-        volume: "2,856,420",
-        marketCap: "3,100억원",
-        tier: "3차",
-        isPremium: true,
-      },
-      {
-        id: "9",
-        name: "네패스아크",
-        code: "330860",
-        currentPrice: 18500,
-        previousClose: 17200,
-        change: 1300,
-        changePercent: 7.56,
-        bidPrice: 18450,
-        askPrice: 18550,
-        volume: "1,523,890",
-        marketCap: "1,800억원",
-        tier: "숨은",
-        isPremium: true,
-      },
-      {
-        id: "10",
-        name: "와이씨",
-        code: "232140",
-        currentPrice: 8520,
-        previousClose: 7850,
-        change: 670,
-        changePercent: 8.54,
-        bidPrice: 8500,
-        askPrice: 8540,
-        volume: "3,421,560",
-        marketCap: "950억원",
-        tier: "숨은",
-        isPremium: true,
-      },
-    ],
-  },
-};
+interface ThemeDetailData {
+  id: number;
+  theme_name: string;
+  theme_score: number;
+  change_rate: string;
+  daily_change: number;
+  stock_count: number;
+  news_count: number;
+  tier1_stocks: ThemeStock[];
+  tier2_stocks: ThemeStock[];
+  tier3_stocks: ThemeStock[];
+  news: NewsItem[];
+}
 
-// 다른 테마들은 기본 데이터로
-const defaultThemeDetail: ThemeDetail = {
-  id: "default",
-  name: "테마",
-  score: 75,
-  description: "테마 설명이 여기에 표시됩니다.",
-  newsCount: 10,
-  avgReturn: 2.5,
-  relatedStocks: [],
+const tierLabel = (tier: number): "1차" | "2차" | "3차" => {
+  if (tier === 1) return "1차";
+  if (tier === 2) return "2차";
+  return "3차";
 };
 
 const tierColors: Record<string, string> = {
   "1차": "bg-blue-600",
   "2차": "bg-green-600",
   "3차": "bg-orange-600",
-  숨은: "bg-purple-600",
 };
 
 const tierDescriptions: Record<string, string> = {
   "1차": "대형주 - 직접 관련",
   "2차": "중견주 - 부품/장비",
   "3차": "중소형주 - 소재/부품",
-  숨은: "초소형주 - 고수익 가능",
 };
 
 export function ThemeDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [selectedTier, setSelectedTier] = useState<string | null>(null);
+  const [theme, setTheme] = useState<ThemeDetailData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const theme = id && mockThemeDetails[id] ? mockThemeDetails[id] : defaultThemeDetail;
+  useEffect(() => {
+    if (!id) return;
+    const load = async () => {
+      try {
+        const data = await themesApi.getDetail(id);
+        setTheme(data as unknown as ThemeDetailData);
+      } catch (e) {
+        setError("테마 데이터를 불러오지 못했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4" />
+          <p className="text-gray-600">테마 데이터 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !theme) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500">{error || "테마를 찾을 수 없습니다."}</p>
+          <Button className="mt-4" onClick={() => navigate("/themes")}>
+            전체 테마로 돌아가기
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  const allStocks = [
+    ...theme.tier1_stocks.map((s) => ({ ...s, tierLabel: "1차" as const, isPremium: false })),
+    ...theme.tier2_stocks.map((s) => ({ ...s, tierLabel: "2차" as const, isPremium: false })),
+    ...theme.tier3_stocks.map((s) => ({ ...s, tierLabel: "3차" as const, isPremium: false })),
+  ];
 
   const filteredStocks = selectedTier
-    ? theme.relatedStocks.filter((s) => s.tier === selectedTier)
-    : theme.relatedStocks;
+    ? allStocks.filter((s) => s.tierLabel === selectedTier)
+    : allStocks;
 
   const tierCounts = {
-    "1차": theme.relatedStocks.filter((s) => s.tier === "1차").length,
-    "2차": theme.relatedStocks.filter((s) => s.tier === "2차").length,
-    "3차": theme.relatedStocks.filter((s) => s.tier === "3차").length,
-    숨은: theme.relatedStocks.filter((s) => s.tier === "숨은").length,
+    "1차": theme.tier1_stocks.length,
+    "2차": theme.tier2_stocks.length,
+    "3차": theme.tier3_stocks.length,
   };
+
+  const isPositive = theme.daily_change >= 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -264,12 +147,11 @@ export function ThemeDetailPage() {
           <div className="flex items-start justify-between">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold">{theme.name}</h1>
+                <h1 className="text-3xl font-bold">{theme.theme_name}</h1>
                 <Badge className="bg-red-600 text-lg px-3 py-1">
-                  {theme.score}점
+                  {Math.round(theme.theme_score)}점
                 </Badge>
               </div>
-              <p className="text-gray-600 max-w-2xl">{theme.description}</p>
             </div>
 
             <div className="flex items-center gap-4">
@@ -277,13 +159,13 @@ export function ThemeDetailPage() {
                 <p className="text-sm text-gray-500">관련 뉴스</p>
                 <p className="text-xl font-semibold flex items-center gap-1">
                   <Newspaper className="size-5" />
-                  {theme.newsCount}건
+                  {theme.news.length}건
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-500">평균 수익률</p>
-                <p className="text-xl font-semibold text-green-600">
-                  +{theme.avgReturn}%
+                <p className="text-sm text-gray-500">등락률</p>
+                <p className={`text-xl font-semibold ${isPositive ? "text-green-600" : "text-red-600"}`}>
+                  {isPositive ? "+" : ""}{theme.change_rate}
                 </p>
               </div>
             </div>
@@ -302,7 +184,7 @@ export function ThemeDetailPage() {
               size="sm"
               onClick={() => setSelectedTier(null)}
             >
-              전체 ({theme.relatedStocks.length})
+              전체 ({allStocks.length})
             </Button>
             {Object.entries(tierCounts).map(([tier, count]) => (
               <Button
@@ -312,11 +194,8 @@ export function ThemeDetailPage() {
                 onClick={() => setSelectedTier(tier)}
                 className="flex items-center gap-2"
               >
-                <span
-                  className={`w-2 h-2 rounded-full ${tierColors[tier]}`}
-                />
+                <span className={`w-2 h-2 rounded-full ${tierColors[tier]}`} />
                 {tier} ({count})
-                {tier === "숨은" && <Lock className="size-3 text-gray-400" />}
               </Button>
             ))}
           </div>
@@ -331,72 +210,24 @@ export function ThemeDetailPage() {
             <table className="w-full">
               <thead className="bg-gray-100 border-b">
                 <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                    분류
-                  </th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">
-                    종목명
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">
-                    현재가
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">
-                    전일비
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">
-                    등락률
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">
-                    매수호가
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">
-                    매도호가
-                  </th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">
-                    거래량
-                  </th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-600">
-                    관심
-                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">분류</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">종목명</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">현재가</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-gray-600">등락률</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-gray-600">관심</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
+                {filteredStocks.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-8 text-center text-gray-400">
+                      관련 종목이 없습니다.
+                    </td>
+                  </tr>
+                )}
                 {filteredStocks.map((stock) => {
-                  const isPositive = stock.change >= 0;
-
-                  if (stock.isPremium) {
-                    return (
-                      <tr
-                        key={stock.id}
-                        className="bg-gray-50/50 hover:bg-gray-100 transition-colors"
-                      >
-                        <td className="px-4 py-4">
-                          <Badge className={`${tierColors[stock.tier]} text-xs`}>
-                            {stock.tier}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-4 font-medium text-gray-400">
-                          <div className="flex items-center gap-2">
-                            <Lock className="size-4" />
-                            <span className="blur-sm select-none">
-                              {stock.name}
-                            </span>
-                          </div>
-                        </td>
-                        <td
-                          colSpan={6}
-                          className="px-4 py-4 text-center text-gray-400"
-                        >
-                          <span className="blur-sm select-none">
-                            ₩{stock.currentPrice.toLocaleString()}
-                          </span>
-                        </td>
-                        <td className="px-4 py-4 text-center">
-                          <Lock className="size-4 text-gray-400 mx-auto" />
-                        </td>
-                      </tr>
-                    );
-                  }
+                  const changeRate = stock.stock_change_rate || "";
+                  const positive = changeRate.startsWith("+") || (!changeRate.startsWith("-") && parseFloat(changeRate) >= 0);
 
                   return (
                     <tr
@@ -404,50 +235,26 @@ export function ThemeDetailPage() {
                       className="hover:bg-blue-50 transition-colors cursor-pointer"
                     >
                       <td className="px-4 py-4">
-                        <Badge className={`${tierColors[stock.tier]} text-xs`}>
-                          {stock.tier}
+                        <Badge className={`${tierColors[stock.tierLabel]} text-xs`}>
+                          {stock.tierLabel}
                         </Badge>
                       </td>
                       <td className="px-4 py-4">
                         <div>
-                          <p className="font-medium">{stock.name}</p>
-                          <p className="text-xs text-gray-500">{stock.code}</p>
+                          <p className="font-medium">{stock.stock_name}</p>
+                          <p className="text-xs text-gray-500">{stock.stock_code}</p>
                         </div>
                       </td>
                       <td className="px-4 py-4 text-right font-semibold">
-                        ₩{stock.currentPrice.toLocaleString()}
+                        {stock.stock_price > 0
+                          ? `₩${stock.stock_price.toLocaleString()}`
+                          : "-"}
                       </td>
-                      <td
-                        className={`px-4 py-4 text-right ${
-                          isPositive ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
+                      <td className={`px-4 py-4 text-right font-semibold ${positive ? "text-green-600" : "text-red-600"}`}>
                         <div className="flex items-center justify-end gap-1">
-                          {isPositive ? (
-                            <TrendingUp className="size-4" />
-                          ) : (
-                            <TrendingDown className="size-4" />
-                          )}
-                          {isPositive ? "+" : ""}
-                          {stock.change.toLocaleString()}
+                          {positive ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
+                          {changeRate || "-"}
                         </div>
-                      </td>
-                      <td
-                        className={`px-4 py-4 text-right font-semibold ${
-                          isPositive ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {isPositive ? "+" : ""}
-                        {stock.changePercent.toFixed(2)}%
-                      </td>
-                      <td className="px-4 py-4 text-right text-blue-600">
-                        ₩{stock.bidPrice.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-4 text-right text-red-600">
-                        ₩{stock.askPrice.toLocaleString()}
-                      </td>
-                      <td className="px-4 py-4 text-right text-gray-600">
-                        {stock.volume}
                       </td>
                       <td className="px-4 py-4 text-center">
                         <button className="text-gray-400 hover:text-yellow-500 transition-colors">
@@ -470,9 +277,7 @@ export function ThemeDetailPage() {
                 <Crown className="size-6 text-purple-600" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">
-                  숨은 관련주까지 모두 확인하세요
-                </h3>
+                <h3 className="font-semibold text-lg">숨은 관련주까지 모두 확인하세요</h3>
                 <p className="text-sm text-gray-600">
                   프리미엄 회원은 3차/숨은 관련주와 실시간 알림을 받을 수 있어요
                 </p>
@@ -484,30 +289,32 @@ export function ThemeDetailPage() {
           </div>
         </Card>
 
-        {/* 관련 뉴스 미리보기 */}
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Newspaper className="size-5" />
-            관련 뉴스
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i} className="p-4 hover:shadow-md transition-shadow cursor-pointer">
-                <p className="text-sm text-gray-500 mb-1">한국경제 · 2시간 전</p>
-                <h3 className="font-medium mb-2 line-clamp-2">
-                  {i === 1 && "엔비디아 실적 호조에 SK하이닉스 신고가 경신"}
-                  {i === 2 && "삼성전자, HBM3E 양산 본격화...AI 반도체 수혜"}
-                  {i === 3 && "한미반도체, AI 반도체 장비 수주 급증"}
-                  {i === 4 && "글로벌 AI 투자 확대로 반도체 슈퍼사이클 전망"}
-                </h3>
-                <p className="text-sm text-gray-600 line-clamp-2">
-                  AI 반도체 관련주들이 글로벌 AI 투자 확대 기대감에 강세를
-                  보이고 있다...
-                </p>
-              </Card>
-            ))}
+        {/* 관련 뉴스 */}
+        {theme.news.length > 0 && (
+          <div className="mt-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Newspaper className="size-5" />
+              관련 뉴스
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {theme.news.slice(0, 4).map((article) => (
+                <Card
+                  key={article.id}
+                  className="p-4 hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => article.link && window.open(article.link, "_blank")}
+                >
+                  <p className="text-sm text-gray-500 mb-1">
+                    {article.source || "뉴스"}{article.published ? ` · ${new Date(article.published).toLocaleDateString("ko-KR")}` : ""}
+                  </p>
+                  <h3 className="font-medium mb-2 line-clamp-2">{article.title}</h3>
+                  {article.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2">{article.description}</p>
+                  )}
+                </Card>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
