@@ -94,18 +94,47 @@ const getAlertTypeBadge = (type: Alert["type"]) => {
   }
 };
 
+interface StoredUser {
+  id: number;
+  email: string;
+  name?: string;
+  picture?: string;
+  provider: string;
+}
+
 export function Header() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [alerts] = useState<Alert[]>(mockAlerts);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
 
   useEffect(() => {
-    // 로컬 스토리지에서 로그인 상태 확인
-    const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-    setIsLoggedIn(loggedIn);
+    const token = localStorage.getItem("access_token");
+    const userJson = localStorage.getItem("user");
+    if (token && userJson) {
+      try {
+        setCurrentUser(JSON.parse(userJson));
+        setIsLoggedIn(true);
+      } catch {
+        setIsLoggedIn(false);
+      }
+    } else {
+      // 레거시 플래그 호환
+      const loggedIn = localStorage.getItem("isLoggedIn") === "true";
+      setIsLoggedIn(loggedIn);
+    }
   }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+    navigate("/login");
+  };
 
   const unreadCount = alerts.filter((a) => !a.isRead).length;
 
@@ -233,12 +262,34 @@ export function Header() {
 
             {/* 로그인 상태에 따른 버튼 */}
             {isLoggedIn ? (
-              <button
-                onClick={() => navigate("/mypage")}
-                className="relative p-2 rounded-full hover:bg-gray-100 transition-colors"
-              >
-                <User className="size-5 text-gray-600" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate("/mypage")}
+                  className="flex items-center gap-2 p-1.5 rounded-full hover:bg-gray-100 transition-colors"
+                  title={currentUser?.name ?? "마이페이지"}
+                >
+                  {currentUser?.picture ? (
+                    <img
+                      src={currentUser.picture}
+                      alt={currentUser.name ?? ""}
+                      className="size-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <User className="size-5 text-gray-600" />
+                  )}
+                  {currentUser?.name && (
+                    <span className="hidden md:block text-sm font-medium text-gray-700 max-w-[80px] truncate">
+                      {currentUser.name}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="text-xs text-gray-500 hover:text-gray-800 transition-colors"
+                >
+                  로그아웃
+                </button>
+              </div>
             ) : (
               <Link to="/login">
                 <Button variant="default">로그인</Button>
