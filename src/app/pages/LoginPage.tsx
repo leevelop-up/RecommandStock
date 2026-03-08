@@ -10,17 +10,33 @@ export function LoginPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // 로그인 로직 구현 예정
-    console.log("Login attempt:", { email, password });
-    
-    // 로그인 성공 시 로컬 스토리지에 저장
-    localStorage.setItem("isLoggedIn", "true");
-    
-    // 홈으로 이동
-    navigate("/");
+    setError("");
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.detail || "로그인에 실패했습니다.");
+        return;
+      }
+      localStorage.setItem("access_token", data.accessToken);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      window.dispatchEvent(new Event("auth-changed"));
+      navigate("/");
+    } catch {
+      setError("서버에 연결할 수 없습니다.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,8 +82,12 @@ export function LoginPage() {
             </a>
           </div>
 
-          <Button type="submit" className="w-full">
-            로그인
+          {error && (
+            <p className="text-sm text-red-500 text-center">{error}</p>
+          )}
+
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "로그인 중..." : "로그인"}
           </Button>
         </form>
 

@@ -21,12 +21,12 @@ console.log("🔧 VITE_API_URL env:", import.meta.env.VITE_API_URL);
 /**
  * API 호출 헬퍼 함수
  */
-async function fetchApi<T>(endpoint: string): Promise<T> {
+async function fetchApi<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE_URL}${endpoint}`;
   console.log(`📡 API 요청: ${url}`);
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(url, options);
     console.log(`📡 API 응답 (${endpoint}):`, response.status, response.statusText);
 
     if (!response.ok) {
@@ -35,6 +35,7 @@ async function fetchApi<T>(endpoint: string): Promise<T> {
       throw new Error(error.detail || `API Error: ${response.status}`);
     }
 
+    if (response.status === 204) return undefined as T;
     const data = await response.json();
     console.log(`✅ API 성공 (${endpoint}):`, data);
     return data;
@@ -42,6 +43,13 @@ async function fetchApi<T>(endpoint: string): Promise<T> {
     console.error(`❌ API 호출 실패 (${endpoint}):`, error);
     throw error;
   }
+}
+
+function authHeaders(): HeadersInit {
+  const token = localStorage.getItem("access_token");
+  return token
+    ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+    : { "Content-Type": "application/json" };
 }
 
 /**
@@ -156,4 +164,58 @@ export const checkApiHealth = async (): Promise<boolean> => {
   } catch {
     return false;
   }
+};
+
+// ── 관심종목 API ─────────────────────────────────────────────────────────────
+
+export interface WatchlistItem {
+  id: number;
+  ticker: string;
+  stock_name: string | null;
+  added_at: string;
+}
+
+export const watchlistApi = {
+  getAll: (): Promise<WatchlistItem[]> =>
+    fetchApi("/watchlist", { headers: authHeaders() }),
+
+  add: (ticker: string, stock_name?: string): Promise<WatchlistItem> =>
+    fetchApi("/watchlist", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ ticker, stock_name }),
+    }),
+
+  remove: (ticker: string): Promise<void> =>
+    fetchApi(`/watchlist/${ticker}`, { method: "DELETE", headers: authHeaders() }),
+};
+
+// ── 포트폴리오 API ────────────────────────────────────────────────────────────
+
+export interface PortfolioItem {
+  id: number;
+  ticker: string;
+  stock_name: string | null;
+  quantity: number;
+  avg_price: number;
+  updated_at: string;
+}
+
+export const portfolioApi = {
+  getAll: (): Promise<PortfolioItem[]> =>
+    fetchApi("/portfolio", { headers: authHeaders() }),
+
+  buy: (ticker: string, quantity: number, price: number, stock_name?: string): Promise<PortfolioItem> =>
+    fetchApi("/portfolio/buy", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ ticker, quantity, price, stock_name }),
+    }),
+
+  sell: (ticker: string, quantity: number, price: number): Promise<unknown> =>
+    fetchApi("/portfolio/sell", {
+      method: "POST",
+      headers: authHeaders(),
+      body: JSON.stringify({ ticker, quantity, price }),
+    }),
 };

@@ -4,6 +4,7 @@ import { StocksListPage } from "@/app/pages/StocksListPage";
 import { ThemeListPage } from "@/app/pages/ThemeListPage";
 import { ThemeDetailPage } from "@/app/pages/ThemeDetailPage";
 import { LoginPage } from "@/app/pages/LoginPage";
+import { SignupPage } from "@/app/pages/SignupPage";
 import { AuthCallbackPage } from "@/app/pages/AuthCallbackPage";
 import { WatchlistPage } from "@/app/pages/WatchlistPage";
 import { PortfolioPage } from "@/app/pages/PortfolioPage";
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/themes" element={<ThemeListPage />} />
         <Route path="/theme/:id" element={<ThemeDetailPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/signup" element={<SignupPage />} />
         <Route path="/mypage" element={<MyPage />} />
         <Route path="/watchlist" element={<WatchlistPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />

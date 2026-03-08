@@ -7,7 +7,7 @@ import {
   PopoverTrigger,
 } from "@/app/components/ui/popover";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Bell, TrendingUp, Zap, Clock, Lock, ChevronRight, User, Database } from "lucide-react";
+import { Bell, TrendingUp, Zap, Clock, Lock, ChevronRight, User } from "lucide-react";
 
 const categories = [
   { name: "추천 종목", path: "/stocks/recommended" },
@@ -110,21 +110,29 @@ export function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [currentUser, setCurrentUser] = useState<StoredUser | null>(null);
 
-  useEffect(() => {
+  const syncAuthState = () => {
     const token = localStorage.getItem("access_token");
     const userJson = localStorage.getItem("user");
     if (token && userJson) {
       try {
         setCurrentUser(JSON.parse(userJson));
         setIsLoggedIn(true);
+        return;
       } catch {
-        setIsLoggedIn(false);
+        // fall through
       }
-    } else {
-      // 레거시 플래그 호환
-      const loggedIn = localStorage.getItem("isLoggedIn") === "true";
-      setIsLoggedIn(loggedIn);
     }
+    setIsLoggedIn(false);
+    setCurrentUser(null);
+  };
+
+  useEffect(() => {
+    syncAuthState();
+    // OAuth 콜백 후 같은 탭에서 발생하는 커스텀 이벤트
+    window.addEventListener("auth-changed", syncAuthState);
+    return () => {
+      window.removeEventListener("auth-changed", syncAuthState);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -136,7 +144,7 @@ export function Header() {
     navigate("/login");
   };
 
-  const unreadCount = alerts.filter((a) => !a.isRead).length;
+  const unreadCount = isLoggedIn ? alerts.filter((a) => !a.isRead).length : 0;
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">

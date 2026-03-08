@@ -51,9 +51,10 @@ export const handleGoogleCallback = async (code: string) => {
       // 토큰 저장
       localStorage.setItem('access_token', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user));
+      window.dispatchEvent(new Event('auth-changed'));
       return { success: true, user: data.user };
     }
-    
+
     return { success: false, error: data.error };
   } catch (error) {
     console.error('Google login error:', error);
@@ -76,9 +77,10 @@ export const handleKakaoCallback = async (code: string) => {
     if (data.success) {
       localStorage.setItem('access_token', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user));
+      window.dispatchEvent(new Event('auth-changed'));
       return { success: true, user: data.user };
     }
-    
+
     return { success: false, error: data.error };
   } catch (error) {
     console.error('Kakao login error:', error);
@@ -108,9 +110,10 @@ export const handleNaverCallback = async (code: string, state: string) => {
       localStorage.setItem('access_token', data.accessToken);
       localStorage.setItem('user', JSON.stringify(data.user));
       sessionStorage.removeItem('naver_oauth_state');
+      window.dispatchEvent(new Event('auth-changed'));
       return { success: true, user: data.user };
     }
-    
+
     return { success: false, error: data.error };
   } catch (error) {
     console.error('Naver login error:', error);
