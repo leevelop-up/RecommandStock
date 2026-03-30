@@ -51,54 +51,45 @@ export function HomePage() {
         console.log("✅ 급등 종목 데이터:", growthData);
         console.log("✅ 테마 데이터:", themesData);
 
-        // API 응답을 Stock 형식으로 변환
-        if (todayData.recommendations && todayData.recommendations.length > 0) {
-          const stocks = todayData.recommendations.slice(0, 4).map((rec: any, index: number) => {
-            // stock_price가 0이면 임시 가격 사용 (실제 데이터 없음)
-            const price = rec.stock_price > 0 ? rec.stock_price : 50000 + (index * 10000);
-
-            return {
-              id: rec.stock_code || String(index),
-              symbol: rec.stock_code,
-              name: rec.stock_name,
-              price: price,
-              change: Math.floor(Math.random() * 10000) - 5000,
-              changePercent: (Math.random() * 10) - 5,
-              marketCap: "-",
-              peRatio: 15 + (Math.random() * 10),
-              dividendYield: Math.random() * 3,
-              sector: rec.theme_name,
-              recommendation: rec.theme_score >= 80 ? "Strong Buy" as const : rec.theme_score >= 60 ? "Buy" as const : "Hold" as const,
-              analystRating: rec.theme_score >= 80 ? 5 : rec.theme_score >= 60 ? 4 : 3,
-            };
-          });
+        // API 응답을 Stock 형식으로 변환 (백엔드는 recommendedStocks / growthStocks 필드명 사용)
+        const recStocks = todayData.recommendedStocks ?? todayData.recommendations ?? [];
+        if (recStocks.length > 0) {
+          const stocks: Stock[] = recStocks.slice(0, 4).map((rec: any) => ({
+            id: rec.id || rec.stock_code || "",
+            symbol: rec.symbol || rec.stock_code || "",
+            name: rec.name || rec.stock_name || "",
+            price: rec.price || 0,
+            change: rec.change || 0,
+            changePercent: rec.changePercent || 0,
+            marketCap: rec.marketCap || "-",
+            peRatio: rec.peRatio || 0,
+            dividendYield: rec.dividendYield || 0,
+            sector: rec.sector || rec.theme_name || "",
+            recommendation: (rec.recommendation as Stock["recommendation"]) || "Hold",
+            analystRating: rec.analystRating || 3,
+          }));
           console.log("✅ 변환된 추천 종목:", stocks);
           setRecommendedStocks(stocks);
         } else {
           console.log("⚠️  추천 종목 데이터 없음, 목 데이터 사용");
         }
 
-        if (growthData.predictions && growthData.predictions.length > 0) {
-          const stocks = growthData.predictions.slice(0, 6).map((pred: any, index: number) => {
-            // stock_price가 0이면 임시 가격 사용
-            const price = pred.stock_price > 0 ? pred.stock_price : 80000 + (index * 15000);
-            const changePercent = pred.daily_change || (Math.random() * 8) - 2;
-
-            return {
-              id: pred.stock_code || String(index),
-              symbol: pred.stock_code,
-              name: pred.stock_name,
-              price: price,
-              change: Math.floor(price * (changePercent / 100)),
-              changePercent: changePercent,
-              marketCap: "-",
-              peRatio: 12 + (Math.random() * 15),
-              dividendYield: Math.random() * 4,
-              sector: pred.theme_name,
-              recommendation: pred.daily_change > 3 ? "Strong Buy" as const : pred.daily_change > 0 ? "Buy" as const : "Hold" as const,
-              analystRating: pred.daily_change > 3 ? 5 : pred.daily_change > 0 ? 4 : 3,
-            };
-          });
+        const growthList = growthData.growthStocks ?? growthData.predictions ?? [];
+        if (growthList.length > 0) {
+          const stocks: Stock[] = growthList.slice(0, 6).map((pred: any) => ({
+            id: pred.id || pred.stock_code || "",
+            symbol: pred.symbol || pred.stock_code || "",
+            name: pred.name || pred.stock_name || "",
+            price: pred.price || 0,
+            change: pred.change || 0,
+            changePercent: pred.changePercent || pred.daily_change || 0,
+            marketCap: pred.marketCap || "-",
+            peRatio: pred.peRatio || 0,
+            dividendYield: pred.dividendYield || 0,
+            sector: pred.sector || pred.theme_name || "",
+            recommendation: (pred.recommendation as Stock["recommendation"]) || "Hold",
+            analystRating: pred.analystRating || 3,
+          }));
           console.log("✅ 변환된 급등 종목:", stocks);
           setThemeStocks(stocks);
         } else {
